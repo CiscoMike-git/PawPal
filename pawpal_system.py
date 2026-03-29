@@ -7,6 +7,10 @@ class Task:
     name: str = ""
     duration: float = 1.0
     priority: str = "low"
+    completed: bool = False
+
+    def mark_complete(self) -> None:
+        self.completed = True
 
     def set_name(self, name: str) -> None:
         self.name = name
@@ -89,14 +93,26 @@ class Scheduler:
                 "explanation": f"{owner.name} has no pets registered. Add a pet and its tasks first.",
             }
 
-        all_pairs = [(pet, task) for pet in owner.pets for task in pet.tasks]
+        all_pairs = [(pet, task) for pet in owner.pets for task in pet.tasks if not task.completed]
+        completed_pairs = [(pet, task) for pet in owner.pets for task in pet.tasks if task.completed]
 
-        if not all_pairs:
+        if not all_pairs and not completed_pairs:
             pet_names = ", ".join(p.name for p in owner.pets)
             return {
-                "entries": [], "skipped": [],
+                "entries": [], "skipped": [], "completed": [],
                 "total_time_scheduled": 0.0, "time_available": owner.time_available,
                 "explanation": f"{owner.name} has pets ({pet_names}) but none have tasks. Add tasks first.",
+            }
+
+        if not all_pairs:
+            return {
+                "entries": [], "skipped": [],
+                "completed": [
+                    {"pet": pet.name, "task": task.name, "duration": task.duration, "priority": task.priority}
+                    for pet, task in completed_pairs
+                ],
+                "total_time_scheduled": 0.0, "time_available": owner.time_available,
+                "explanation": f"All tasks for {owner.name}'s pets are already completed.",
             }
 
         all_pairs.sort(key=lambda pair: (PRIORITY_RANK[pair[1].priority], pair[1].duration))
@@ -150,6 +166,10 @@ class Scheduler:
 
         return {
             "entries": entries, "skipped": skipped,
+            "completed": [
+                {"pet": pet.name, "task": task.name, "duration": task.duration, "priority": task.priority}
+                for pet, task in completed_pairs
+            ],
             "total_time_scheduled": time_used, "time_available": owner.time_available,
             "explanation": " ".join(lines),
         }
