@@ -42,9 +42,10 @@
 **b. Design changes**
 
 - Did your design change during implementation?
+    My design changed significantly from what I first envisioned during the UML design process to when it was implemented. Initially, I designed this system to be a basic scheduler of the day's tasks, only taking in a few parameters and then outputting a reasonable schedule. This schedule, however, was formatted as a list of suquential activities to perform, not a comprehesive schedule with specified times to do the activity. As I got through phase 3 and 4 of the project, I discovered that I probably misunderstoood the objective of this project's application due to how my implementation and the project's instructions heavilly differed from, and actual countered, each other. This required me to heavily depend on AI to attempt to 180 from my initial architecture and conform with CodePath's requirements.
 
 - If yes, describe at least one change and why you made it.
-
+    An example of the aforementioned changes was including a completion status to the Task class. My design figured that an owner only needed to know their list of activities for the day, not actively maintain it. Due to this, I did not included any completion validation within my initial framework. After comming accross Phase 2 - Step 3 in the project instructions, I refactored my code to include such to conform with CodePath's expectations.
 
 ---
 
@@ -53,16 +54,17 @@
 **a. Constraints and priorities**
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
+    After heavy revision, my scheduler considers an array of constraints including available time, task duration, task priority, last task completion date vs required frequency, any task dependencies, and time-of-day preferences. The priority constraint for my algorithm is time, without the requisite ammount, a task cannot, and will not, be scheduled. Following this are the weights of a task, such as task priority and last task completion date vs required frequency. These factors will decide which task should be prioritized for placement. Finally, task dependencies outline a required sequence for a set of tasks preventing tasks logically subsequent to another from being placed ahead of that task. In essence, time budget decides feasibility, priority & urgency decides value, and dependency order decides sequencing.
 
 - How did you decide which constraints mattered most?
-
+    I determined that the ultimate make or break of a task would be if it could be put into the schedule, because no matter how imperative a task was, if the time wasn't there, it was a hapless endeavor. Therefore, I deduced that time should take priority followed by the value of a task which would be determined based on urgency and given priority. This is not to say that a shorter task will automatically win over a higher value, my algorithm will attempt to balance between the two, creating an optimal schedule with both being considered. By programming the algorithm in this way, the resultant schedule is neither greedy nor slim.
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
-
+    My scheduler trades off readabiity for complexity, having extensive features and complex scheduling capabilities that makes the codebase long and unwieldy. Such complexity includes features like time blocks and sequencing, both commonly utilized aspects of scheduling. However, the copious functionality has also increased my codebase by several hunderd lines of code and has made many lines difficult to read to facilitate modularity.
 - Why is that tradeoff reasonable for this scenario?
-
+    This tradeoff is reasonable because it provides the target audience with an application especially suited to their needs at the expense of the programmer's ease. This prospect is a naturally expected aspect of software programming, when complexity increases, it is likely that the codebase will also increase to back that complexity up. Therefore, being as the additional functionality is viable, reasonabliy expected, and likely commonly utilized, it is a fair tradeoff for the scenario.
 
 ---
 
@@ -71,7 +73,7 @@
 **a. How you used AI**
 
 - How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-
+    
 - What kinds of prompts or questions were most helpful?
 
 

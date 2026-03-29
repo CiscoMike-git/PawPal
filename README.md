@@ -41,3 +41,31 @@ pip install -r requirements.txt
 5. Add tests to verify key behaviors.
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
+
+## Smarter Scheduling
+
+PawPal+ uses several algorithms and data-driven heuristics to build the best possible daily plan:
+
+### Knapsack Task Selection
+The scheduler treats your available time as a capacity budget and uses a **0/1 knapsack dynamic programming algorithm** to select the highest-value combination of tasks that fits. Each task is assigned a numeric value based on its priority (high = 100, medium = 10, low = 1), multiplied by an urgency factor that grows the more overdue a recurring task is.
+
+### Slot Preferences
+Tasks can specify a preferred time of day — `morning`, `afternoon`, or `evening`. Tasks scheduled in their preferred slot receive a small value bonus, nudging the optimizer to honor owner and pet preferences when time permits.
+
+### Dependency Ordering
+Tasks can declare dependencies on other tasks (e.g., "give medication after feeding"). The scheduler uses **topological sort** to ensure dependencies always run first, and skips a task entirely if its dependency was not selected.
+
+### Time-Window Packing
+Owners define one or more availability windows (e.g., 9:00–11:30, 17:00–19:00). Selected tasks are packed sequentially into those windows, with each task's start time assigned immediately after the previous task ends.
+
+### Conflict Detection
+After scheduling, `detect_conflicts()` scans for any tasks whose time ranges overlap and surfaces them so the user can resolve them.
+
+### Recurring Task Tracking
+Tasks can recur on a `daily`, `weekly`, or `monthly` frequency. When `complete_task()` is called, the current task is marked done and a new task representing the next occurrence is automatically created and added to the pet's task list.
+
+### Filtering and Sorting
+The schedule can be queried after generation. `filter_tasks()` narrows results by completion status or pet name, and `sort_by_time()` returns tasks ordered by their assigned start time — useful for displaying the plan chronologically in the UI.
+
+### Explanations
+Every generated schedule includes a human-readable explanation for each included task (why it was prioritized) and each skipped task (whether it was dropped due to time, a missing dependency, or already being complete).
