@@ -10,15 +10,21 @@ class Task:
     completed: bool = False
 
     def mark_complete(self) -> None:
+        """Mark this task as completed."""
         self.completed = True
 
     def set_name(self, name: str) -> None:
+        """Set the task name."""
         self.name = name
 
     def set_duration(self, length: float) -> None:
-        self.duration = max(1.0, min(240.0, length))
+        """Set the task duration in minutes, raising ValueError if not between 1 and 240."""
+        if not (1.0 <= length <= 240.0):
+            raise ValueError(f"Duration must be between 1.0 and 240.0 minutes, got {length}.")
+        self.duration = length
 
     def set_priority(self, priority: str) -> None:
+        """Set the task priority to 'low', 'medium', or 'high'."""
         if priority not in ("low", "medium", "high"):
             raise ValueError(f"Priority must be 'low', 'medium', or 'high', got '{priority}'.")
         self.priority = priority
@@ -31,17 +37,21 @@ class Pet:
     tasks: List[Task] = field(default_factory=list)
 
     def set_name(self, name: str) -> None:
+        """Set the pet's name."""
         self.name = name
 
     def set_species(self, species: str) -> None:
+        """Set the pet's species."""
         self.species = species
 
     def add_task(self, task: Task) -> None:
+        """Add a task to this pet, raising ValueError if a task with the same name already exists."""
         if any(t.name == task.name for t in self.tasks):
             raise ValueError(f"Task '{task.name}' already exists for this pet.")
         self.tasks.append(task)
 
     def remove_task(self, name: str) -> None:
+        """Remove a task by name, raising ValueError if it does not exist."""
         if not any(t.name == name for t in self.tasks):
             raise ValueError(f"Task '{name}' not found for this pet.")
         self.tasks = [t for t in self.tasks if t.name != name]
@@ -54,19 +64,23 @@ class Owner:
     pets: List[Pet] = field(default_factory=list)
 
     def set_name(self, name: str) -> None:
+        """Set the owner's name."""
         self.name = name
 
     def set_time_available(self, length: float) -> None:
+        """Set the owner's available time in minutes, raising ValueError if negative."""
         if length < 0.0:
             raise ValueError(f"Time available must be >= 0.0, got {length}.")
         self.time_available = length
 
     def add_pet(self, pet: Pet) -> None:
+        """Add a pet to this owner, raising ValueError if a pet with the same name already exists."""
         if any(p.name == pet.name for p in self.pets):
             raise ValueError(f"Pet '{pet.name}' already exists for this owner.")
         self.pets.append(pet)
 
     def remove_pet(self, name: str) -> None:
+        """Remove a pet by name, raising ValueError if it does not exist."""
         if not any(p.name == name for p in self.pets):
             raise ValueError(f"Pet '{name}' not found for this owner.")
         self.pets = [p for p in self.pets if p.name != name]
@@ -77,9 +91,11 @@ class Scheduler:
         self.owner = owner
 
     def set_owner(self, owner: Owner) -> None:
+        """Assign an owner to this scheduler."""
         self.owner = owner
 
     def create_schedule(self) -> dict:
+        """Build and return a prioritized schedule of pet tasks within the owner's available time."""
         if self.owner is None:
             raise ValueError("Cannot create schedule: no owner assigned.")
 
