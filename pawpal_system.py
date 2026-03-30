@@ -405,9 +405,9 @@ class Scheduler:
         return warnings
 
     def complete_task(self, pet_name: str, task_name: str) -> Optional[Task]:
-        """Mark a task complete and create the next occurrence for daily/weekly tasks.
+        """Mark a task complete and create the next occurrence for daily/weekly/monthly tasks.
 
-        Returns the newly created Task if frequency is 'daily' or 'weekly', else None.
+        Returns the newly created Task if frequency is 'daily', 'weekly', or 'monthly', else None.
         Raises ValueError if the pet or task is not found, or the task is already completed.
         """
         if self.owner is None:
