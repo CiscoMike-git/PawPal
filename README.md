@@ -88,3 +88,22 @@ The suite contains **83 tests** across 10 categories:
 - **Conflict detection** — same-start, overlapping, cross-pet, strict adjacency, three-way overlap, untimed-task exclusion, and no-owner edge cases
 - **Filter tasks** — filtering by completion status, by pet name, combined filters, and error paths
 - **Sort by time** — chronological ordering, untimed tasks appended last, insertion-order preservation, cross-pet merging, and no-owner error
+
+## Features
+
+- **0/1 Knapsack Scheduling** — selects the highest-value subset of tasks that fits within available time using dynamic programming
+- **Weighted Priority Scoring** — assigns each task a numeric value (high=100, medium=10, low=1) multiplied by an urgency factor that grows proportionally as recurring tasks fall overdue
+- **Slot-Preference Bonuses** — tasks specifying a preferred time of day (morning/afternoon/evening) receive a small value bonus, nudging the optimizer to honor preferences when time permits
+- **Topological Dependency Ordering** — uses Kahn's algorithm with a min-heap to reorder tasks so dependencies always execute first; detects cycles and falls back to the original order
+- **Interval Merging & Subtraction** — owner availability windows are maintained as a list of non-overlapping intervals; adding a window merges overlaps, removing one performs interval subtraction (including splits)
+- **First-Fit Time-Window Packing** — sequentially assigns concrete start times by packing selected tasks into availability windows in priority order; tasks that don't fit any window are demoted to skipped
+- **Conflict Detection** — after scheduling, performs pairwise interval overlap checks across all timed tasks and surfaces any collisions as warnings
+- **Recurring Task Generation** — when a recurring task (daily/weekly/monthly) is completed, automatically clones it with a unique incremental name suffix and resets the last-done timestamp
+- **Multi-Criteria Filtering & Sorting** — `filter_tasks()` narrows results by completion status and/or pet name; `sort_by_time()` returns chronologically ordered tasks with untimed tasks appended last
+- **Human-Readable Explanations** — every generated schedule includes a narrative explanation covering available time, why tasks were selected or skipped, dependency notes, and slot preference matches
+
+## Demo
+<a href="Images\Built Schedule.png" target="_blank"><img src='Images\Built Schedule.png' title='PawPal App' width='' alt='PawPal App' class='center-block' /></a>.
+
+## Weighted Prioritization
+Agent Mode assisted me in creating the weighted prioritization by suggesting potential weights and weighted algorithms to utilize in achieving this functionality. While I was not aware of the knapsack selection algorithm, I was familiar with topological sort and heaps. Therefore, after having the AI explain the knapsack selection algorithm to me, I felt comfortable with implementing it in adherence to the AI's suggestions. The AI also assisted in refactoring the surrounding code to utilize this new algorithm rather than the old implementation.
