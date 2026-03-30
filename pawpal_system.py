@@ -139,20 +139,56 @@ class Owner:
             parts = t.split(":")
             if len(parts) != 2 or not all(p.isdigit() for p in parts):
                 raise ValueError(f"{label} time must be in HH:MM format, got '{t}'.")
+            h, m = int(parts[0]), int(parts[1])
+            if m >= 60 or (h == 24 and m > 0) or h >= 24:
+                raise ValueError(f"{label} time '{t}' is out of range (must be 00:00–23:59).")
         if start >= end:
             raise ValueError(f"Start time '{start}' must be before end time '{end}'.")
 
+    @staticmethod
+    def _min_to_hhmm(minutes: int) -> str:
+        return f"{minutes // 60:02d}:{minutes % 60:02d}"
+
+    @staticmethod
+    def _hhmm_to_min(t: str) -> int:
+        h, m = map(int, t.split(":"))
+        return h * 60 + m
+
     def add_time_window(self, start: str, end: str) -> None:
-        """Append a (start, end) availability window, raising ValueError on invalid input."""
+        """Add a (start, end) availability window, merging any overlapping existing windows."""
         self._validate_window(start, end)
-        self.time_available.append((start, end))
+        new_s = self._hhmm_to_min(start)
+        new_e = self._hhmm_to_min(end)
+        merged = []
+        for ws, we in [(self._hhmm_to_min(s), self._hhmm_to_min(e)) for s, e in self.time_available]:
+            if ws <= new_e and we >= new_s:  # overlapping or adjacent — absorb
+                new_s = min(new_s, ws)
+                new_e = max(new_e, we)
+            else:
+                merged.append((ws, we))
+        merged.append((new_s, new_e))
+        merged.sort()
+        self.time_available = [(self._min_to_hhmm(s), self._min_to_hhmm(e)) for s, e in merged]
 
     def remove_time_window(self, start: str, end: str) -> None:
-        """Remove an existing (start, end) window, raising ValueError if not found."""
-        try:
-            self.time_available.remove((start, end))
-        except ValueError:
-            raise ValueError(f"Time window '{start}'–'{end}' not found.")
+        """Remove a (start, end) interval from availability, trimming or splitting existing windows."""
+        self._validate_window(start, end)
+        rm_s = self._hhmm_to_min(start)
+        rm_e = self._hhmm_to_min(end)
+        result = []
+        changed = False
+        for ws, we in [(self._hhmm_to_min(s), self._hhmm_to_min(e)) for s, e in self.time_available]:
+            if rm_e <= ws or rm_s >= we:  # no overlap — keep as-is
+                result.append((ws, we))
+            else:
+                changed = True
+                if ws < rm_s:  # left remainder
+                    result.append((ws, rm_s))
+                if we > rm_e:  # right remainder
+                    result.append((rm_e, we))
+        if not changed:
+            raise ValueError(f"No availability window overlaps '{start}'–'{end}'.")
+        self.time_available = [(self._min_to_hhmm(s), self._min_to_hhmm(e)) for s, e in result]
 
     def add_pet(self, pet: Pet) -> None:
         """Add a pet to this owner, raising ValueError if a pet with the same name already exists."""
@@ -449,7 +485,7 @@ class Scheduler:
             frequency=task.frequency,
             last_done=datetime.now(),
             preferred_slot=task.preferred_slot,
-            time=task.time,
+            time=None,
         )
         pet.add_task(next_task)
         return next_task
@@ -530,6 +566,10 @@ class Scheduler:
 
         # Reorder to satisfy depends_on constraints while preserving the priority/pet sort
         selected = self._topo_sort(selected)
+
+        # Reset stale times so detect_conflicts() only sees freshly-assigned values.
+        for _, task in all_pairs:
+            task.time = None
 
         # Assign a concrete start time to each task by packing them into the owner's windows.
         # Any task that could not be placed within a window gets task.time = None.

@@ -245,6 +245,68 @@ def test_owner_add_time_window_end_before_start_raises():
         pass
 
 
+def test_owner_validate_window_rejects_hour_over_23():
+    """Hours >= 24 are invalid (e.g. '24:00') and must raise ValueError."""
+    owner = Owner(name="Alice", time_available=[])
+    try:
+        owner.add_time_window("24:00", "25:00")
+        assert False, "Expected ValueError"
+    except ValueError:
+        pass
+
+
+def test_owner_validate_window_rejects_minute_over_59():
+    """Minutes >= 60 are invalid (e.g. '08:60') and must raise ValueError."""
+    owner = Owner(name="Alice", time_available=[])
+    try:
+        owner.add_time_window("08:00", "08:60")
+        assert False, "Expected ValueError"
+    except ValueError:
+        pass
+
+
+def test_owner_validate_window_accepts_boundary_23_59():
+    """'23:59' is the latest valid time and must not raise."""
+    owner = Owner(name="Alice", time_available=[])
+    owner.add_time_window("22:00", "23:59")
+    assert ("22:00", "23:59") in owner.time_available
+
+
+def test_add_time_window_merges_overlapping_windows():
+    """Adding a window that overlaps an existing one merges them into a single window."""
+    owner = Owner(name="Alice", time_available=[])
+    owner.add_time_window("08:00", "09:30")
+    owner.add_time_window("09:00", "10:30")
+    assert owner.time_available == [("08:00", "10:30")]
+
+
+def test_add_time_window_merges_adjacent_windows():
+    """Adding a window that starts exactly where an existing one ends merges them."""
+    owner = Owner(name="Alice", time_available=[])
+    owner.add_time_window("08:00", "09:00")
+    owner.add_time_window("09:00", "10:00")
+    assert owner.time_available == [("08:00", "10:00")]
+
+
+def test_add_time_window_non_overlapping_kept_separate():
+    """Windows with a gap between them are kept as two distinct entries."""
+    owner = Owner(name="Alice", time_available=[])
+    owner.add_time_window("08:00", "09:00")
+    owner.add_time_window("10:00", "11:00")
+    assert len(owner.time_available) == 2
+    assert ("08:00", "09:00") in owner.time_available
+    assert ("10:00", "11:00") in owner.time_available
+
+
+def test_add_time_window_absorbs_multiple_existing():
+    """A new window that spans several existing windows merges all of them into one."""
+    owner = Owner(name="Alice", time_available=[])
+    owner.add_time_window("08:00", "09:00")
+    owner.add_time_window("10:00", "11:00")
+    owner.add_time_window("07:30", "11:30")  # covers both
+    assert owner.time_available == [("07:30", "11:30")]
+
+
 def test_owner_remove_time_window_valid():
     owner = Owner(name="Alice", time_available=[("08:00", "09:00")])
     owner.remove_time_window("08:00", "09:00")
@@ -255,6 +317,53 @@ def test_owner_remove_time_window_not_found_raises():
     owner = Owner(name="Alice", time_available=[("08:00", "09:00")])
     try:
         owner.remove_time_window("10:00", "11:00")
+        assert False, "Expected ValueError"
+    except ValueError:
+        pass
+
+
+def test_remove_time_window_trims_start():
+    """Removing the first portion of a window leaves only the right remainder."""
+    owner = Owner(name="Alice", time_available=[("08:00", "09:00")])
+    owner.remove_time_window("08:00", "08:30")
+    assert owner.time_available == [("08:30", "09:00")]
+
+
+def test_remove_time_window_trims_end():
+    """Removing the last portion of a window leaves only the left remainder."""
+    owner = Owner(name="Alice", time_available=[("08:00", "09:00")])
+    owner.remove_time_window("08:30", "09:00")
+    assert owner.time_available == [("08:00", "08:30")]
+
+
+def test_remove_time_window_splits_window():
+    """Removing the middle of a window produces two remainder windows."""
+    owner = Owner(name="Alice", time_available=[("08:00", "09:00")])
+    owner.remove_time_window("08:20", "08:40")
+    assert ("08:00", "08:20") in owner.time_available
+    assert ("08:40", "09:00") in owner.time_available
+    assert len(owner.time_available) == 2
+
+
+def test_remove_time_window_partial_overlap_left():
+    """Removal range starts before the window — trims the start of the window."""
+    owner = Owner(name="Alice", time_available=[("08:00", "09:00")])
+    owner.remove_time_window("07:30", "08:30")
+    assert owner.time_available == [("08:30", "09:00")]
+
+
+def test_remove_time_window_partial_overlap_right():
+    """Removal range ends after the window — trims the end of the window."""
+    owner = Owner(name="Alice", time_available=[("08:00", "09:00")])
+    owner.remove_time_window("08:30", "09:30")
+    assert owner.time_available == [("08:00", "08:30")]
+
+
+def test_remove_time_window_validates_format():
+    """remove_time_window() now validates the HH:MM format and raises ValueError on bad input."""
+    owner = Owner(name="Alice", time_available=[("08:00", "09:00")])
+    try:
+        owner.remove_time_window("8am", "9am")
         assert False, "Expected ValueError"
     except ValueError:
         pass
@@ -621,7 +730,7 @@ def test_complete_task_new_task_inherits_fields():
     assert next_task.duration == 30
     assert next_task.priority == "high"
     assert next_task.preferred_slot == "morning"
-    assert next_task.time == "07:00"
+    assert next_task.time is None  # time is not inherited; assigned fresh by create_schedule()
     assert next_task.depends_on == "Feed"
     assert next_task.frequency == "daily"
 
