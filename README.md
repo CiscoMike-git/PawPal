@@ -69,3 +69,22 @@ The schedule can be queried after generation. `filter_tasks()` narrows results b
 
 ### Explanations
 Every generated schedule includes a human-readable explanation for each included task (why it was prioritized) and each skipped task (whether it was dropped due to time, a missing dependency, or already being complete).
+
+## Testing PawPal+
+- Test Command: python -m pytest
+- Confidence Level: 5 Stars
+
+### Description
+
+The suite contains **83 tests** across 10 categories:
+
+- **Task properties & validation** — name, duration, priority, frequency, preferred slot, dependencies, last-done timestamp, `mark_complete`, urgency multiplier, and scheduling value
+- **Pet management** — name and species setters, adding and removing tasks, duplicate task prevention
+- **Owner management** — name validation, adding and removing time windows (including format and ordering checks), available-minutes calculation, and adding and removing pets
+- **Scheduler initialization** — `set_owner` assignment
+- **Scheduling algorithm** — knapsack optimizer correctness, per-pet task grouping, slot-preference bonuses, overdue-task urgency prioritization, completion ratio, and edge cases (zero time budget, task exceeding window size)
+- **Dependency resolution** — topological ordering, dangling dependency handling, and cycle detection with graceful fallback
+- **Task recurrence** — `complete_task` for daily, weekly, and monthly frequencies; field inheritance; timestamp accuracy; name-suffix parsing; error paths for unknown pets, unknown tasks, and already-completed tasks
+- **Conflict detection** — same-start, overlapping, cross-pet, strict adjacency, three-way overlap, untimed-task exclusion, and no-owner edge cases
+- **Filter tasks** — filtering by completion status, by pet name, combined filters, and error paths
+- **Sort by time** — chronological ordering, untimed tasks appended last, insertion-order preservation, cross-pet merging, and no-owner error
