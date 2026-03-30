@@ -103,7 +103,7 @@ The suite contains **83 tests** across 10 categories:
 - **Human-Readable Explanations** — every generated schedule includes a narrative explanation covering available time, why tasks were selected or skipped, dependency notes, and slot preference matches
 
 ## Demo
-<a href="Images\Built Schedule.png" target="_blank"><img src='Images\Built Schedule.png' title='PawPal App' width='' alt='PawPal App' class='center-block' /></a>.
+<a href="Images\Built Schedule.png" target="_blank"><img src='Images\Built Schedule.png' title='PawPal App' width='' alt='PawPal App' class='center-block' /></a>
 
 ## Weighted Prioritization
 Agent Mode assisted me in creating the weighted prioritization by suggesting potential weights and weighted algorithms to utilize in achieving this functionality. While I was not aware of the knapsack selection algorithm, I was familiar with topological sort and heaps. Therefore, after having the AI explain the knapsack selection algorithm to me, I felt comfortable with implementing it in adherence to the AI's suggestions. The AI also assisted in refactoring the surrounding code to utilize this new algorithm rather than the old implementation.
